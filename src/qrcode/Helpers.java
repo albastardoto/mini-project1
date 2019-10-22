@@ -110,7 +110,6 @@ public final class Helpers {
 				editorFrame.setVisible(true);
 			}
 		});
-		
 		return similar;
 		
 	}

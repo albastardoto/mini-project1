@@ -14,7 +14,7 @@ public class MatrixConstruction {
 	 * 
 	 * both needs to have their alpha component to 255
 	 */
-	static int W = (1 << 31) - 1;
+	static int W = 0xFF_FF_FF_FF;
 	static int B = (255 << 24);
 	// ... MYDEBUGCOLOR = ...;
 	// feel free to add your own colors for debugging purposes
@@ -201,15 +201,16 @@ public class MatrixConstruction {
 		int xOffSet = 0;
 		int yOffSet = 0;
 		for (int i = 0; i < 15; i++) {
-			if (i == 6)	xOffSet = 1;
+			if (i == 6)
+				xOffSet = 1;
 			if (i == 7) {
 				yOffSet = 16 - matrix.length;
-				xOffSet = -yOffSet;
+				xOffSet = 1 + -yOffSet;
 			}
-			if(i==9) yOffSet-=1;
-			if(i==9) break;
-			matrix[8][matrix.length-1-i  + yOffSet] = formatSequence[i] ? W : B;
-			matrix[i + xOffSet][8] = formatSequence[i] ? W : B;
+			if (i == 9)
+				yOffSet -= 1;
+			matrix[8][matrix.length - 1 - i + yOffSet] = formatSequence[i] ? B : W;
+			matrix[i + xOffSet][8] = formatSequence[i] ? B : W;
 		}
 	}
 
@@ -228,8 +229,37 @@ public class MatrixConstruction {
 	 * @return the color with the masking
 	 */
 	public static int maskColor(int col, int row, boolean dataBit, int masking) {
-		// TODO Implementer
-		return 0;
+		if (masking < 0 && masking > 7)
+			return (dataBit ? B : W);
+		boolean mask = false;
+		switch (masking) {
+		case 0:
+			mask = ((row + col) % 2 == 0);
+			break;
+		case 1:
+			mask = (row % 2 == 0);
+			break;
+		case 2:
+			mask = (col % 3 == 0);
+			break;
+		case 3:
+			mask = ((row + col) % 3 == 0);
+			break;
+		case 4:
+			mask = (Math.floor(row / 2) + Math.floor(row / 3) % 2 == 0);
+			break;
+		case 5:
+			mask = ((row*col)%2 + (row*col)%3)==0;
+			break;
+		case 6:
+			mask = (((row*col)%2 + (row*col)%3)%2==0);
+			break;
+		case 7:
+			mask = (((row+col)%2 + (row*col)%3)%2==0);
+			break;
+		}
+		if(mask) dataBit=!dataBit;
+		return dataBit? B:W;
 	}
 
 	/**
@@ -239,8 +269,30 @@ public class MatrixConstruction {
 	 * @param data   the data to add
 	 */
 	public static void addDataInformation(int[][] matrix, boolean[] data, int mask) {
-		// TODO Implementer
+		//number of 2 wide columns
+		int numberOfColumns=(matrix.length-1)/2;
+		int dataIndex=0;
+		for(int i=numberOfColumns-1;i>=0;i--) {
+			boolean goingUp=true;
+			if(i%2==0) goingUp=false;
+			System.out.println(goingUp);
+			for(int j=0;j<matrix.length*2;j++) {
+				int moduleX= (i*2);
+				int moduleY= (int) Math.floor(j/2) ;
+				int xOffset=(j%2==0)?1:0;
+				if(i>2) xOffset+=1;
+				moduleX+=xOffset;
+				if(goingUp) moduleY=matrix.length-moduleY-1;
+				if(matrix[moduleX][moduleY]==0) {
 
+					boolean dataBit=false;
+					if(dataIndex<data.length) dataBit=data[dataIndex];
+					matrix[moduleX][moduleY]=maskColor(moduleX, moduleY, dataBit , mask);
+					System.out.println(moduleX + " " +moduleY + " " + j);
+					dataIndex+=1;
+				}
+			}
+		}
 	}
 
 	/*

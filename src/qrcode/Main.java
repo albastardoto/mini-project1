@@ -2,13 +2,13 @@ package qrcode;
 
 public class Main {
 
-	public static final String INPUT =  "hueygaidshfbaklh";
+	public static final String INPUT =  "https://www.youtube.com";
 
 	/*
 	 * Parameters
 	 */
 	public static final int VERSION = 2;
-	public static final int MASK = 0;
+	public static final int MASK = 1;
 	public static final int SCALING = 20;
 
 	public static void main(String[] args) {
