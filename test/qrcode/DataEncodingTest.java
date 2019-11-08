@@ -54,7 +54,7 @@ class DataEncodingTest {
 	}
 
 	@Test
-	void testaddInformations() {
+	public void testaddInformations() {
 		int[] res =  DataEncoding.addInformations(Arrays.copyOfRange(isoCode, 0, 17));
 		assertArrayEquals(byteCodeV1, res);
 	}

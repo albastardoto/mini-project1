@@ -38,7 +38,7 @@ public class MatrixConstruction {
 		 * PART 3
 		 */
 		addDataInformation(matrix, data, mask);
-
+		System.out.println("Penalty points " + evaluate(matrix));
 		return matrix;
 	}
 
@@ -246,20 +246,21 @@ public class MatrixConstruction {
 			mask = ((row + col) % 3 == 0);
 			break;
 		case 4:
-			mask = (Math.floor(row / 2) + Math.floor(row / 3) % 2 == 0);
+			mask = ((Math.floor(row / 2) + Math.floor(col / 3)) % 2 == 0);
 			break;
 		case 5:
-			mask = ((row*col)%2 + (row*col)%3)==0;
+			mask = ((row * col) % 2 + (row * col) % 3) == 0;
 			break;
 		case 6:
-			mask = (((row*col)%2 + (row*col)%3)%2==0);
+			mask = (((row * col) % 2 + (row * col) % 3) % 2 == 0);
 			break;
 		case 7:
-			mask = (((row+col)%2 + (row*col)%3)%2==0);
+			mask = (((row + col) % 2 + (row * col) % 3) % 2 == 0);
 			break;
 		}
-		if(mask) dataBit=!dataBit;
-		return dataBit? B:W;
+		if (mask)
+			dataBit = !dataBit;
+		return dataBit ? B : W;
 	}
 
 	/**
@@ -269,27 +270,31 @@ public class MatrixConstruction {
 	 * @param data   the data to add
 	 */
 	public static void addDataInformation(int[][] matrix, boolean[] data, int mask) {
-		//number of 2 wide columns
-		int numberOfColumns=(matrix.length-1)/2;
-		int dataIndex=0;
-		for(int i=numberOfColumns-1;i>=0;i--) {
-			boolean goingUp=true;
-			if(i%2==0) goingUp=false;
-			System.out.println(goingUp);
-			for(int j=0;j<matrix.length*2;j++) {
-				int moduleX= (i*2);
-				int moduleY= (int) Math.floor(j/2) ;
-				int xOffset=(j%2==0)?1:0;
-				if(i>2) xOffset+=1;
-				moduleX+=xOffset;
-				if(goingUp) moduleY=matrix.length-moduleY-1;
-				if(matrix[moduleX][moduleY]==0) {
+		// number of 2 wide columns
+		int numberOfColumns = (matrix.length - 1) / 2;
+		int dataIndex = 0;
+		for (int i = numberOfColumns - 1; i >= 0; i--) {
+			boolean goingUp = true;
+			if (i % 2 == 0)
+				goingUp = false;
+			for (int j = 0; j < matrix.length * 2; j++) {
+				int moduleX = (i * 2);
+				int moduleY = (int) Math.floor(j / 2);
+				int xOffset = (j % 2 == 0) ? 1 : 0;
+				if (i > 2)
+					xOffset += 1;
+				moduleX += xOffset;
+				if (goingUp)
+					moduleY = matrix.length - moduleY - 1;
+				if (moduleX == 10 && moduleY == 14) {
+				}
+				if (matrix[moduleX][moduleY] == 0) {
 
-					boolean dataBit=false;
-					if(dataIndex<data.length) dataBit=data[dataIndex];
-					matrix[moduleX][moduleY]=maskColor(moduleX, moduleY, dataBit , mask);
-					System.out.println(moduleX + " " +moduleY + " " + j);
-					dataIndex+=1;
+					boolean dataBit = false;
+					if (dataIndex < data.length)
+						dataBit = data[dataIndex];
+					matrix[moduleX][moduleY] = maskColor(moduleX, moduleY, dataBit, mask);
+					dataIndex += 1;
 				}
 			}
 		}
@@ -327,8 +332,20 @@ public class MatrixConstruction {
 	 * @return the mask number that minimize the penalty
 	 */
 	public static int findBestMasking(int version, boolean[] data) {
-		// TODO BONUS
-		return 0;
+		int minPenalty = 0;
+		int minPenaltyIndex = 0;
+		for (int i = 0; i < 8; i++) {
+			int[][] matrix = constructMatrix(version, i);
+			addDataInformation(matrix, data, i);
+			int penalty = evaluate(matrix);
+			if (i==0 || penalty < minPenalty) {
+				minPenaltyIndex = i;
+				minPenalty=penalty;
+			}
+		}
+		System.out.println(minPenaltyIndex);
+		System.out.println(minPenalty);
+		return minPenaltyIndex;
 	}
 
 	/**
@@ -338,8 +355,145 @@ public class MatrixConstruction {
 	 * @return the penalty score obtained by the QR code, lower the better
 	 */
 	public static int evaluate(int[][] matrix) {
-		// TODO BONUS
+		int penaltyPoints = 0;
+		int SameInARow = 0;
+		int SameInACol = 0;
+		int lastBitInRow = 0;
+		int lastBitInCol = 0;
+		int[] searchPattern = { W, W, W, W, B, W, B, B, B, W, B, W };
+		int[] rSearchPattern = { W, B, W, B, B, B, W, B, W, W, W, W };
+		int rowPatternIndex = 0;
+		int colPatternIndex = 0;
+		int rRowPatternIndex = 0;
+		int rColPatternIndex = 0;
+		int numBlackModules = 0;
+		int patternPenaltyPoints = 0;
+		// add penalties for vertical and horizontal runs of the same color
+		for (int i = 0; i < matrix.length; i++) {
 
+			for (int j = 0; j < matrix.length; j++) {
+				if (matrix[i][j] == B)
+					numBlackModules += 1;
+				if (j == 0) {
+					lastBitInRow = matrix[j][i];
+					lastBitInCol = matrix[i][j];
+					SameInARow = 1;
+					SameInACol = 1;
+				}
+				// CHECKS FOR RUNS OF SAME COLOR
+				// ---------------------------------------------------
+				if (j != 0 && matrix[j][i] == lastBitInRow) {
+					SameInARow++;
+				} else {
+					SameInARow = 1;
+				}
+				if (j != 0 && matrix[i][j] == lastBitInCol) {
+					SameInACol++;
+				} else {
+					SameInACol = 1;
+				}
+				penaltyPoints += getPenaltyPointsForSequence(SameInACol);
+				penaltyPoints += getPenaltyPointsForSequence(SameInARow);
+				lastBitInRow = matrix[j][i];
+				lastBitInCol = matrix[i][j];
+				// END CHECK FOR RUNS OF THE SAME COLOR
+			}
+		}
+		// adds the penalties for any pattern of {W,W,W,W,B,W,B,B,B,W,B} or the reverse
+		int rowColor = W;
+		int colColor = B;
+		for (int i = 0; i < matrix.length + 2; i++) {
+			for (int j = 0; j < matrix.length + 2; j++) {
+				if (j == 0) {
+					rowPatternIndex = 0;
+					rRowPatternIndex = 0;
+					colPatternIndex = 0;
+					rColPatternIndex = 0;
+				}
+				// ADDS BORDER OF WHITE
+				if (j == 0 || j == matrix.length + 1 || i == 0 || i == matrix.length + 1) {
+					rowColor = W;
+					colColor = W;
+				} else {
+					rowColor = matrix[j - 1][i - 1];
+					colColor = matrix[i - 1][j - 1];
+				}
+				// END OF ADDING WHITE BORDER
+				rowPatternIndex = changePatternIndex(searchPattern, rowPatternIndex, rowColor);
+				rRowPatternIndex = changePatternIndex(rSearchPattern, rRowPatternIndex, rowColor);
+				colPatternIndex = changePatternIndex(searchPattern, colPatternIndex, colColor);
+				rColPatternIndex = changePatternIndex(rSearchPattern, rColPatternIndex, colColor);
+
+				patternPenaltyPoints += getPenaltyPointsForPattern(rowPatternIndex);
+				patternPenaltyPoints += getPenaltyPointsForPattern(rRowPatternIndex);
+				patternPenaltyPoints += getPenaltyPointsForPattern(colPatternIndex);
+				patternPenaltyPoints += getPenaltyPointsForPattern(rColPatternIndex);
+				if (rowPatternIndex == 12) {
+					rowPatternIndex = 0;
+				}
+				if (rRowPatternIndex == 12) {
+					rRowPatternIndex = 0;
+				}
+				if (colPatternIndex == 12) {
+					colPatternIndex = 0;
+				}
+				if (rColPatternIndex == 12) {
+					rColPatternIndex = 0;
+				}
+			}
+		}
+		penaltyPoints += patternPenaltyPoints;
+		// add penalties for 2x2 boxes of the same color
+		for (int i = 0; i < matrix.length - 1; i++) {
+			for (int j = 0; j < matrix.length - 1; j++) {
+				int color11 = matrix[j][i];
+				int color12 = matrix[j][i + 1];
+				int color21 = matrix[j + 1][i];
+				int color22 = matrix[j + 1][i + 1];
+				if ((color11 == color12) && (color11 == color21) && (color11 == color22)) {
+					penaltyPoints += 3;
+				}
+			}
+		}
+		// add penalty points for uneven distribution of colors
+		float percentage = (float) (100f * (numBlackModules / Math.pow(matrix.length, 2)));
+		int multipleOfFive = 0;
+		while (percentage >= 0) {
+			percentage -= 5;
+			multipleOfFive++;
+		}
+		if (multipleOfFive > 10)
+			multipleOfFive--;
+		int penaltyMultiplier = Math.abs(multipleOfFive - 10);
+		penaltyPoints += penaltyMultiplier * 10;
+		return penaltyPoints;
+	}
+
+	private static int changePatternIndex(int[] pattern, int currentSearchIndex, int moduleColor) {
+		if (moduleColor == pattern[currentSearchIndex]) {
+			return ++currentSearchIndex;
+		} else if (pattern[3] == W && currentSearchIndex == 4) {
+			return currentSearchIndex;
+		} else
+			return 0;
+	}
+
+	private static int getPenaltyPointsForSequence(int inARow) {
+		if (inARow < 5) {
+			return 0;
+		} else {
+			if (inARow == 5) {
+				return 3;
+			} else {
+				return 1;
+			}
+		}
+	}
+
+	private static int getPenaltyPointsForPattern(int patternIndex) {
+		if (patternIndex == 12) {
+			return 40;
+		}
 		return 0;
 	}
 

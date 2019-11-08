@@ -1,14 +1,13 @@
 package qrcode;
-
 public class Main {
 
-	public static final String INPUT =  "https://www.youtube.com";
+	public static final String INPUT =  "nique sa mere";
 
 	/*
 	 * Parameters
 	 */
-	public static final int VERSION = 2;
-	public static final int MASK = 1;
+	public static final int VERSION = 1;
+	public static final int MASK = 4;
 	public static final int SCALING = 20;
 
 	public static void main(String[] args) {
@@ -21,12 +20,10 @@ public class Main {
 		/*
 		 * image
 		 */
-		int[][] qrCode = MatrixConstruction.renderQRCodeMatrix(VERSION, encodedData,MASK);
-
+		int[][] qrCode = MatrixConstruction.renderQRCodeMatrix(VERSION, encodedData);
 		/*
 		 * Visualization
 		 */
-		System.out.println(qrCode);
 		Helpers.show(qrCode, SCALING);
 	}
 
